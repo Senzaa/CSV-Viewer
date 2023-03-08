@@ -9,7 +9,7 @@ class AppWindow(tk.Tk):
         self.title("CSV Viewer")
         self.geometry("800x450")
 
-        self.__topMenu = TopMenu(self)
         self.__dataGrid = DataGrid(self)
+        self.__topMenu = TopMenu(self, self.__dataGrid)
 
         self.config(menu=self.__topMenu)
