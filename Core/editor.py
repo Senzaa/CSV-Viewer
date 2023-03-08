@@ -53,24 +53,40 @@ class Editor():
         }
 
     def OpenDialog(self):
+        target = fd.askopenfile(
+            filetypes = (
+                ("CSV files", "*.csv"),
+                ("All files", "*.*")
+            )
+        )
         self.LoadData(
-            fd.askopenfile(
-                filetypes = (
-                    ("CSV files", "*.csv"),
-                    ("All files", "*.*")
-                )
-            ).name
+            
         )
 
     def SaveAsDialog(self):
         if self.HasData:
-            self.Save(
-                fd.asksaveasfile(
-                    initialfile=path.basename(self.__currentData["Filename"]),
-                    defaultextension=".csv",
-                    filetypes = (
-                        ("CSV files", "*.csv"),
-                        ("All files", "*.*")
-                    )
-                ).name
+            target = fd.asksaveasfile(
+                initialfile=path.basename(self.__currentData["Filename"]),
+                defaultextension=".csv",
+                filetypes = (
+                    ("CSV files", "*.csv"),
+                    ("All files", "*.*")
+                )
             )
+            if target:
+                self.Save(
+                    target.name
+                )
+        else:
+            target = fd.asksaveasfile(
+                initialfile="My New CSV Spreadsheet",
+                defaultextension=".csv",
+                filetypes = (
+                    ("CSV files", "*.csv"),
+                    ("All files", "*.*")
+                )
+            )
+            if target:
+                self.Save(
+                    target.name
+                )
