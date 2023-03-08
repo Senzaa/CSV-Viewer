@@ -59,9 +59,10 @@ class Editor():
                 ("All files", "*.*")
             )
         )
-        self.LoadData(
-            
-        )
+        if target:
+            self.LoadData(
+                target.name
+            )
 
     def SaveAsDialog(self):
         if self.HasData:
