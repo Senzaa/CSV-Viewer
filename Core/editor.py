@@ -11,20 +11,6 @@ class Editor():
     def CurrentData(self):
         return self.__currentData
     
-    def AskOpenFile(self):
-        fileName = None
-        try:
-            fileName = fd.askopenfile(
-                filetypes = (
-                    ("CSV files", "*.csv"),
-                    ("All files", "*.*")
-                )
-            ).name
-        except Exception as ex:
-            showerror(title="Error", message=str(ex))
-        return fileName
-
-    
     @property
     def HasData(self):
         return self.__currentData != None
@@ -42,11 +28,41 @@ class Editor():
     def GetData(self) -> pd.DataFrame:
         return self.__currentData["DataFrame"]
     
-    def Save(self, file):
+    def Save(self, file=None):
         if self.HasData:
-            self.__currentData["DataFrame"].to_csv(file or self.__currentData["Filename"], sep="\t", encoding="utf-8")
+            target = file or self.__currentData["Filename"]
+            if target != None:
+                self.__currentData["DataFrame"].to_csv(target, sep="\t", encoding="utf-8")
+            else:
+                self.SaveAsDialog()
     
-    def SaveTo(self):
+    def SetCellValue(self, row, col, data):
+        if self.HasData:
+            df: pd.DataFrame = self.__currentData["DataFrame"]
+            df.at[row, col] = data
+    
+    def GetCellValue(self, row, col):
+        if self.HasData:
+            return self.__currentData["DataFrame"].at[row, col]
+
+    def NewEmpty(self):
+        self.Save()
+        self.__curentData = {
+            "Filename": None,
+            "DataFrame": pd.DataFrame()
+        }
+
+    def OpenDialog(self):
+        self.LoadData(
+            fd.askopenfile(
+                filetypes = (
+                    ("CSV files", "*.csv"),
+                    ("All files", "*.*")
+                )
+            ).name
+        )
+
+    def SaveAsDialog(self):
         if self.HasData:
             self.Save(
                 fd.asksaveasfile(
