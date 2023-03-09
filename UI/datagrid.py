@@ -36,7 +36,9 @@ class DataGrid(ttk.Frame):
                     ent.grid(row=row, column=column)
                     self.__datagrid[row].append(strVar)
                 if column < columnsCount and row < rowsCount:
-                    self.__datagrid[row][column].set(self.df.iat[row, column] or '')
+                    self.__datagrid[row][column].set(self.df.iat[row, column])
+                else:
+                    self.__datagrid[row][column].set('')
     
     def CommitChanges(self):
         print("Comitting changes")
