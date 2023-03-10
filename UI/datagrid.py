@@ -16,6 +16,15 @@ class DataGrid(ttk.Frame):
     def st(self) -> Spreadsheet:
         return Editor_Instance.CurrentData.Spreadsheet
     
+    def Reset(self):
+        for row in self.__datagrid:
+            data: tuple[tk.StringVar, str, tk.Entry]
+            for data in row:
+                data[2].unbind(data[1])
+                data[2].destroy()
+        self.__datagrid.clear()
+        self.FillDatagrid()
+
     def FillDatagrid(self):
         if not Editor_Instance.HasData:
             print("No data provided to fill datagrid with.")
@@ -59,7 +68,7 @@ class DataGrid(ttk.Frame):
                 for column in range(self.st.columnsCount):
                     data: tuple[tk.StringVar, str, tk.Entry] = self.__datagrid[row][column]
                     data[2].unbind(data[1])
-                    data[2].grid_forget()
+                    data[2].destroy()
                 self.__datagrid.pop(row)
                 break
         self.st.removeRow(index)
@@ -80,7 +89,7 @@ class DataGrid(ttk.Frame):
                 if column == index:
                     data: tuple[tk.StringVar, str, tk.Entry] = self.__datagrid[row][column]
                     data[2].unbind(data[1])
-                    data[2].grid_forget()
+                    data[2].destroy()
                     self.__datagrid[row].pop(column)
                     break
         self.st.removeColumn(index)

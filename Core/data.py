@@ -84,5 +84,8 @@ class Spreadsheet():
     
     def to_csv(self, file, sep=',', encoding='utf-8'):
         with open(file, mode = 'w', encoding = encoding) as f:
-            for row in self.__data:
-                f.write(sep.join(map(lambda value: str(value), row)))
+            f.write(
+                '\n'.join(
+                    [','.join(map(lambda x: str(x), row)) for row in self.__data]
+                )
+            )
