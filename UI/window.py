@@ -1,6 +1,8 @@
 import tkinter as tk
+from instance import Editor_Instance
 from UI.menu import TopMenu
 from UI.datagrid import DataGrid
+from UI.gridmenu import GridContextMenu
 
 class AppWindow(tk.Tk):
     slots = '__topMenu', '__dataGrid'

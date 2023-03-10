@@ -1,65 +1,87 @@
 import tkinter as tk
+from Core.data import Spreadsheet
 from tkinter import ttk
-import pandas as pd
 from instance import Editor_Instance
-
-class DataCell(tk.Entry):
-    slots = '_row', '_column'
-    def __init__(self, row, column, **kvargs):
-        tk.Entry.__init__(self, **kvargs)
-        self._row = row
-        self._column = column
-        self.grid(row=row, column=column)
+from UI.gridmenu import GridContextMenu
 
 class DataGrid(ttk.Frame):
-    slots = '__datagrid'
+    slots = '__datagrid', '__gridContextMenu'
     def __init__(self, master):
         ttk.Frame.__init__(self, master)
         self.pack(padx=5, pady=5)
         self.__datagrid = []
+        self.__gridContextMenu = GridContextMenu(master, self)
     
     @property
-    def df(self) -> pd.DataFrame:
-        return Editor_Instance.CurrentData.DataFrame
+    def st(self) -> Spreadsheet:
+        return Editor_Instance.CurrentData.Spreadsheet
     
     def FillDatagrid(self):
-        print("Filling datagrid")
-        rowsCount, columnsCount = len(self.df.index), len(self.df.columns)
+        if not Editor_Instance.HasData:
+            print("No data provided to fill datagrid with.")
+            return
 
-        for row in range(max(10, rowsCount)):
+        def contextHandler(event, row, column):
+            print(row, column)
+            self.__gridContextMenu.tk_popup(event.x_root, event.y_root, row, column)
+        for row in range(self.st.rowsCount):
             if len(self.__datagrid) <= row:
                 self.__datagrid.append([])
-            for column in range(max(10, columnsCount)):
+            for column in range(self.st.columnsCount):
                 if len(self.__datagrid[row]) <= column:
                     strVar = tk.StringVar()
                     ent = tk.Entry(self, justify = tk.CENTER, width = 10, textvariable=strVar)
                     ent.grid(row=row, column=column)
-                    self.__datagrid[row].append(strVar)
-                if column < columnsCount and row < rowsCount:
-                    self.__datagrid[row][column].set(self.df.iat[row, column])
-                else:
-                    self.__datagrid[row][column].set('')
+                    bindId = ent.bind("<Button-3>", lambda event, r=row, c=column: contextHandler(event, r, c))
+                    self.__datagrid[row].append((strVar, bindId, ent))
+                self.__datagrid[row][column][0].set(self.st[row, column])
     
     def CommitChanges(self):
-        print("Comitting changes")
-        rowsCount, columnsCount = len(self.df.index), len(self.df.columns)
-        for row in range(len(self.__datagrid)):
-            for column in range(len(self.__datagrid[row])):
-                if column < columnsCount and row < rowsCount:
-                    self.df.iat[row, column] = self.__datagrid[row][column].get()
+        if not Editor_Instance.HasData:
+            print("No data provided to commit changes to.")
+            return
+        for row in range(self.st.rowsCount):
+            for column in range(self.st.columnsCount):
+                self.st[row, column] = self.__datagrid[row][column][0].get()
 
-    def InsertRow(self, data, at = -1):
-        self.df.loc[at] = data
+    def InsertRow(self, index: int):
+        self.CommitChanges()
+        if index < self.st.rowsCount:
+            self.st.insertRow(index)
+        else:
+            self.st.appendRow()
         self.FillDatagrid()
     
     def RemoveRow(self, index: int):
-        self.df.drop(index)
+        self.CommitChanges()
+        for row in range(self.st.rowsCount):
+            if row == index:
+                for column in range(self.st.columnsCount):
+                    data: tuple[tk.StringVar, str, tk.Entry] = self.__datagrid[row][column]
+                    data[2].unbind(data[1])
+                    data[2].grid_forget()
+                self.__datagrid.pop(row)
+                break
+        self.st.removeRow(index)
         self.FillDatagrid()
 
-    def InsertColumn(self, column, value = None, at = -1):
-        self.df.insert(at, column, value)
+    def InsertColumn(self, index: int):
+        self.CommitChanges()
+        if index < self.st.columnsCount:
+            self.st.insertColumn(index, '')
+        else:
+            self.st.appendColumn('')
         self.FillDatagrid()
     
-    def RemoveColumn(self, column):
-        self.df.drop(column, axis=1)
+    def RemoveColumn(self, index: int):
+        self.CommitChanges()
+        for row in range(self.st.rowsCount):
+            for column in range(self.st.columnsCount):
+                if column == index:
+                    data: tuple[tk.StringVar, str, tk.Entry] = self.__datagrid[row][column]
+                    data[2].unbind(data[1])
+                    data[2].grid_forget()
+                    self.__datagrid[row].pop(column)
+                    break
+        self.st.removeColumn(index)
         self.FillDatagrid()

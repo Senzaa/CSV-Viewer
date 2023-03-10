@@ -1,13 +1,13 @@
 from tkinter.messagebox import showerror, showwarning, showinfo, askyesno, askokcancel, askyesnocancel
 from tkinter import filedialog as fd
-import pandas as pd
+from Core.data import Spreadsheet
 from os import path
 
 class EditorData():
-    slots = '__fileName', '__dataFrame'
-    def __init__(self, fileName, dataFrame):
+    slots = '__fileName', '__spreadsheet'
+    def __init__(self, fileName, spreadsheet):
         self.__fileName = fileName
-        self.__dataFrame = dataFrame
+        self.__spreadsheet = spreadsheet
     
     @property
     def Filename(self) -> str:
@@ -18,8 +18,8 @@ class EditorData():
         self.__fileName = val or 'unknown.csv'
     
     @property
-    def DataFrame(self) -> pd.DataFrame:
-        return self.__dataFrame
+    def Spreadsheet(self) -> Spreadsheet:
+        return self.__spreadsheet
 
 class Editor():
     slots = '__currentData'
@@ -34,34 +34,19 @@ class Editor():
     def HasData(self):
         return self.__currentData != None
 
-    def LoadData(self, file) -> pd.DataFrame:
-        if self.HasData:
-            if askokcancel('Warning!', 'Save changes before opening?'):
-                self.Save()
+    def LoadData(self, file) -> Spreadsheet:
         if path.exists(file):
-            self.__currentData = EditorData(file, pd.read_csv(file, sep=",", header=None, encoding="utf-8"))
-        return self.GetData()
-    
-    def GetData(self) -> EditorData:
+            self.__currentData = EditorData(file, Spreadsheet.from_csv(file))
         return self.__currentData
     
     def Save(self, file=None):
         if self.HasData:
             target = file or self.__currentData.Filename
             if target != None:
-                self.__currentData.DataFrame.to_csv(target, sep=",", header=None, index = False, encoding="utf-8")
+                self.__currentData.Spreadsheet.to_csv(target)
             else:
                 self.SaveAsDialog()
     
-    def SetCellValue(self, row, col, data):
-        if self.HasData:
-            df: pd.DataFrame = self.__currentData.DataFrame
-            df.at[row, col] = data
-    
-    def GetCellValue(self, row, col):
-        if self.HasData:
-            return self.__currentData.DataFrame.at[row, col]
-
     def NewEmpty(self):
         if self.HasData:
             result = askyesnocancel('Warning!', 'Save changes before creating a new CSV file?')
@@ -69,9 +54,18 @@ class Editor():
                 self.Save()
             elif result == None:
                 return
-        self.__currentData = EditorData(None, pd.DataFrame())
+        self.__currentData = EditorData(None, Spreadsheet())
 
     def OpenDialog(self):
+        if self.HasData:
+            result = askyesnocancel('Warning!', 'Save changes before opening?')
+            if result == True:
+                if self.CurrentData.Filename != None:
+                    self.Save()
+                else:
+                    self.SaveAsDialog()
+            elif result == None:
+                return
         target = fd.askopenfile(
             filetypes = (
                 ("CSV files", "*.csv"),
